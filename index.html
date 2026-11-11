@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹사이트 첫 화면 캡처 스튜디오 (Web Screenshot Studio)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        input, textarea {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-ring 2.5s infinite ease-in-out;
+        }
+        .checkerboard-bg {
+            background-color: #f8fafc;
+            background-image: 
+                linear-gradient(45deg, #f1f5f9 25%, transparent 25%), 
+                linear-gradient(-45deg, #f1f5f9 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f1f5f9 75%), 
+                linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <i class="ph-bold ph-camera text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg sm:text-xl text-slate-900 tracking-tight flex items-center gap-2">
+                        웹사이트 첫 화면 캡처 스튜디오
+                        <span class="hidden sm:inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200">PRO</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">링크 한 줄로 만드는 고화질 랜딩페이지 스크린샷 & 목업 생성기</p>
+                </div>
+            </div>
+
+            <!-- Mode Switch Tabs -->
+            <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button id="tabSingle" onclick="switchMode('single')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm flex items-center gap-1.5">
+                    <i class="ph-bold ph-App-window"></i>
+                    단일 캡처 & 목업
+                </button>
+                <button id="tabBatch" onclick="switchMode('batch')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                    <i class="ph-bold ph-squares-four"></i>
+                    다중 링크 갤러리
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- ==================== SINGLE CAPTURE MODE ==================== -->
+        <div id="singleModeSection" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Control Panel (4 cols) -->
+            <div class="lg:col-span-5 xl:col-span-4 space-y-5">
+                
+                <!-- 1. URL Input Card -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <label for="urlInput" class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="ph-fill ph-link text-indigo-600 text-lg"></i>
+                            캡처할 웹사이트 주소 (URL)
+                        </label>
+                        <button onclick="pasteFromClipboard()" class="text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition flex items-center gap-1">
+                            <i class="ph ph-clipboard-text"></i> 붙여넣기
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="urlInput" 
+                            placeholder="예: github.com 또는 https://www.wikipedia.org" 
+                            value="https://ko.wikipedia.org"
+                            onkeydown="if(event.key === 'Enter') captureSingleSite()"
+                            class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition"
+                        >
+                        <button onclick="clearUrlInput()" title="지우기" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <i class="ph-fill ph-x-circle text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- Quick Sample URLs -->
+                    <div class="space-y-1.5">
+                        <span class="text-xs font-medium text-slate-400">빠른 테스트 샘플:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="selectSample('https://ko.wikipedia.org')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition border border-slate-200/60">🌐 위키백과</button>
+                            <button onclick="selectSample('https://github.com')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition border border-slate-200/60">🐙 GitHub</button>
+                            <button onclick="selectSample('https://news.ycombinator.com')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition border border-slate-200/60">🟧 HackerNews</button>
+                            <button onclick="selectSample('https://tailwindcss.com')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition border border-slate-200/60">🎨 Tailwind</button>
+                            <button onclick="selectSample('https://www.naver.com')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition border border-slate-200/60">🟢 네이버</button>
+                        </div>
+                    </div>
+
+                    <button 
+                        id="captureBtn"
+                        onclick="captureSingleSite()" 
+                        class="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.99] text-white font-bold rounded-xl shadow-md shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all"
+                    >
+                        <i class="ph-bold ph-aperture text-xl"></i>
+                        <span>첫 화면 캡처하기</span>
+                    </button>
+                </div>
+
+                <!-- 2. Capture Options Card -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-5">
+                    <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                        <i class="ph-fill ph-sliders-horizontal text-indigo-600 text-lg"></i>
+                        캡처 및 스타일 옵션
+                    </h2>
+
+                    <!-- Viewport Size Selector -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold text-slate-600 block">화면 크기 (기기 비율)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="setViewport('desktop')" id="vp-desktop" class="vp-btn flex flex-col items-center justify-center p-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50/60 text-indigo-700 font-semibold text-xs transition">
+                                <i class="ph-bold ph-desktop text-lg mb-1"></i>
+                                <span>데스크톱</span>
+                                <span class="text-[10px] font-normal text-slate-500">1280 × 800</span>
+                            </button>
+                            <button type="button" onclick="setViewport('tablet')" id="vp-tablet" class="vp-btn flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs transition">
+                                <i class="ph-bold ph-device-tablet text-lg mb-1"></i>
+                                <span>태블릿</span>
+                                <span class="text-[10px] font-normal text-slate-400">768 × 1024</span>
+                            </button>
+                            <button type="button" onclick="setViewport('mobile')" id="vp-mobile" class="vp-btn flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs transition">
+                                <i class="ph-bold ph-device-mobile text-lg mb-1"></i>
+                                <span>모바일</span>
+                                <span class="text-[10px] font-normal text-slate-400">375 × 812</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Frame Mockup Selector -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                            <span>프레임 스타일 (실시간 적용)</span>
+                            <span class="text-[11px] text-indigo-600 font-normal">재캡처 없이 즉시 변경</span>
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="setFrameStyle('browser')" id="frame-browser" class="frame-btn py-2.5 px-2 rounded-xl border-2 border-indigo-600 bg-indigo-50/60 text-indigo-700 font-semibold text-xs text-center transition">
+                                💻 브라우저 창
+                            </button>
+                            <button type="button" onclick="setFrameStyle('card')" id="frame-card" class="frame-btn py-2.5 px-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs text-center transition">
+                                🖼️ 입체 카드
+                            </button>
+                            <button type="button" onclick="setFrameStyle('none')" id="frame-none" class="frame-btn py-2.5 px-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs text-center transition">
+                                📄 원본만
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Background Color Theme (for Browser/Card frame) -->
+                    <div id="bgThemeSelector" class="space-y-2">
+                        <label class="text-xs font-semibold text-slate-600 block">배경 여백 테마</label>
+                        <div class="flex items-center gap-2.5">
+                            <button onclick="setBgTheme('indigo')" id="bg-indigo" class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 ring-2 ring-offset-2 ring-indigo-600 transition" title="인디고 퍼플"></button>
+                            <button onclick="setBgTheme('ocean')" id="bg-ocean" class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 hover:scale-105 transition" title="오션 블루"></button>
+                            <button onclick="setBgTheme('sunset')" id="bg-sunset" class="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 hover:scale-105 transition" title="선셋 오렌지"></button>
+                            <button onclick="setBgTheme('dark')" id="bg-dark" class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-800 to-slate-950 hover:scale-105 transition" title="다크 슬레이트"></button>
+                            <button onclick="setBgTheme('clean')" id="bg-clean" class="w-8 h-8 rounded-full bg-slate-200 border border-slate-300 hover:scale-105 transition" title="라이트 그레이"></button>
+                            <button onclick="setBgTheme('transparent')" id="bg-transparent" class="w-8 h-8 rounded-full checkerboard-bg border border-slate-300 hover:scale-105 transition flex items-center justify-center text-[10px] font-bold text-slate-600" title="투명 배경">투명</button>
+                        </div>
+                    </div>
+
+                    <!-- Screenshot Engine Selector -->
+                    <div class="space-y-2 pt-2 border-t border-slate-100">
+                        <label for="engineSelect" class="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                            <span>캡처 렌더링 엔진</span>
+                            <span class="text-[11px] text-slate-400 font-normal">막힐 경우 엔진 변경</span>
+                        </label>
+                        <select id="engineSelect" onchange="captureSingleSite()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="microlink">⚡ Microlink 엔진 (권장 · 고화질 + 사이트 정보 추출)</option>
+                            <option value="thumio">🚀 Thum.io 엔진 (빠른 실시간 스트리밍 캡처)</option>
+                            <option value="mshots">🛡️ WordPress mShots (우회 캡처 백업용)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 3. Extracted Site Metadata Card -->
+                <div id="metaInfoCard" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <i class="ph-fill ph-info text-indigo-500 text-sm"></i>
+                        웹사이트 메타데이터 정보
+                    </h3>
+                    <div class="flex items-start gap-3">
+                        <img id="metaFavicon" src="https://placehold.co/40x40/e2e8f0/64748b?text=W" alt="Favicon" class="w-10 h-10 rounded-xl border border-slate-200 p-1 bg-white object-contain shrink-0" onerror="this.src='https://placehold.co/40x40/e2e8f0/64748b?text=🌐'">
+                        <div class="min-w-0 flex-1">
+                            <h4 id="metaTitle" class="text-sm font-bold text-slate-900 truncate">사이트 제목</h4>
+                            <a id="metaUrl" href="#" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 hover:underline truncate block">https://example.com</a>
+                        </div>
+                    </div>
+                    <p id="metaDesc" class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 line-clamp-3">
+                        사이트 설명 정보가 여기에 표시됩니다.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Right Preview & Export Area (8 cols) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+                
+                <!-- Preview Card Wrapper -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col">
+                    
+                    <!-- Top Action Toolbar -->
+                    <div class="px-5 py-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
+                        <div class="flex items-center gap-2">
+                            <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span id="statusText" class="text-xs font-semibold text-slate-700">미리보기 준비 완료</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyCanvasToClipboard()" id="copyImgBtn" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-95">
+                                <i class="ph-bold ph-copy text-sm text-indigo-600"></i>
+                                <span>클립보드 복사</span>
+                            </button>
+                            <button onclick="downloadScreenshot()" id="downloadBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-500/20 transition active:scale-95">
+                                <i class="ph-bold ph-download-simple text-sm"></i>
+                                <span>PNG 이미지 저장</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas / Image Viewport Stage -->
+                    <div class="relative min-h-[420px] sm:min-h-[540px] checkerboard-bg flex items-center justify-center p-4 sm:p-8 overflow-auto">
+                        
+                        <!-- Loading Overlay -->
+                        <div id="loadingOverlay" class="absolute inset-0 bg-white/85 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6 text-center hidden">
+                            <div class="relative w-16 h-16 mb-4 flex items-center justify-center">
+                                <div class="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
+                                <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+                                <i class="ph-fill ph-camera text-2xl text-indigo-600 animate-pulse"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-800 mb-1" id="loadingTitle">웹사이트 첫 화면을 촬영하고 있습니다...</h3>
+                            <p class="text-xs text-slate-500 max-w-sm" id="loadingSubtext">원격 클라우드 브라우저가 해당 링크에 접속하여 렌더링하는 중입니다. (약 3~8초 소요)</p>
+                        </div>
+
+                        <!-- Rendered HTML5 Canvas (Used for compositing Browser Frame & Exporting) -->
+                        <div id="canvasWrapper" class="max-w-full flex flex-col items-center justify-center transition-all duration-300">
+                            <canvas id="screenshotCanvas" class="max-w-full h-auto rounded-xl shadow-lg transition-all"></canvas>
+                            
+                            <!-- Fallback Direct Image (Shown if a backup engine blocks CORS canvas pixel reading) -->
+                            <div id="corsFallbackContainer" class="hidden w-full max-w-3xl">
+                                <div class="bg-slate-900 rounded-t-xl px-4 py-2.5 flex items-center gap-3">
+                                    <div class="flex gap-1.5">
+                                        <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                                        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                    </div>
+                                    <div id="fallbackUrlBar" class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-md flex-1 truncate font-mono">
+                                        https://...
+                                    </div>
+                                </div>
+                                <img id="fallbackImage" src="" alt="Captured Website" class="w-full h-auto rounded-b-xl shadow-2xl border border-slate-200 bg-white">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer Info Bar -->
+                    <div class="px-5 py-3 bg-white border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-fill ph-sparkle text-indigo-500"></i>
+                            <span>팁: 좌측 패널에서 <strong>프레임 스타일</strong>이나 <strong>배경 여백 테마</strong>를 누르면 즉시 디자인이 바뀝니다.</span>
+                        </div>
+                        <a id="openOriginalUrlLink" href="https://ko.wikipedia.org" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium flex items-center gap-1">
+                            <span>원본 사이트 열기</span>
+                            <i class="ph-bold ph-arrow-square-out"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Captures History Strip -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                            <i class="ph-bold ph-clock-counter-clockwise text-indigo-600 text-base"></i>
+                            최근 캡처 기록 (세션 보관함)
+                        </h3>
+                        <button onclick="clearHistory()" class="text-xs text-slate-400 hover:text-rose-500 transition">기록 비우기</button>
+                    </div>
+                    <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="col-span-full py-6 text-center text-xs text-slate-400">
+                            캡처한 사이트가 이곳에 자동으로 저장되어 언제든 다시 불러올 수 있습니다.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==================== BATCH / MULTI-URL GALLERY MODE ==================== -->
+        <div id="batchModeSection" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="ph-fill ph-squares-four text-indigo-600 text-xl"></i>
+                            다중 웹사이트 일괄 스냅샷 생성기
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">여러 개의 링크를 줄바꿈(Enter)으로 구분해 붙여넣으면 한 번에 시각적 북마크/썸네일 카드를 생성합니다.</p>
+                    </div>
+                    <button onclick="fillSampleBatchUrls()" class="self-start sm:self-auto text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-xl transition">
+                        ✨ 인기 사이트 4개 자동 입력
+                    </button>
+                </div>
+
+                <textarea 
+                    id="batchUrlsInput" 
+                    rows="4" 
+                    placeholder="https://ko.wikipedia.org&#10;https://github.com&#10;https://tailwindcss.com&#10;https://news.ycombinator.com"
+                    class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                ></textarea>
+
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <span class="text-xs text-slate-500">※ 한 번에 최대 8개까지 동시 캡처를 권장합니다.</span>
+                    <button onclick="generateBatchGallery()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-500/20 flex items-center gap-2 transition">
+                        <i class="ph-bold ph-magic-wand text-lg"></i>
+                        <span>일괄 썸네일 갤러리 생성</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Batch Output Gallery Grid -->
+            <div id="batchGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 py-5 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+            <p>© 2026 웹사이트 첫 화면 캡처 스튜디오 (Web Screenshot Studio). All rights reserved.</p>
+            <p class="flex items-center gap-1">
+                <i class="ph-fill ph-shield-check text-emerald-500"></i>
+                클라이언트 캔버스 합성 및 멀티 엔진 캡처 기술 적용
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ==================== APPLICATION & SECURITY SCRIPTS ==================== -->
+    <script>
+        /* =========================================================================
+         * 1. SECURITY & ANTI-INSPECTION PROTECTION SCRIPT
+         * Blocks contextmenu, dragstart, non-input selection, and DevTools keys.
+         * ========================================================================= */
+        (function initSecurityProtection() {
+            // Block Right-Click Context Menu
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showToast('보안 정책상 우클릭 메뉴가 제한되어 있습니다. 상단의 [PNG 이미지 저장] 버튼을 이용해 주세요.', 'info');
+            });
+
+            // Block Dragging of Images/Elements
+            document.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+            });
+
+            // Block Text Selection outside of Input/Textarea
+            document.addEventListener('selectstart', function(e) {
+                const tagName = e.target.tagName ? e.target.tagName.toLowerCase() : '';
+                if (tagName !== 'input' && tagName !== 'textarea') {
+                    e.preventDefault();
+                }
+            });
+
+            // Block Developer Tools & View-Source Keyboard Shortcuts
+            document.addEventListener('keydown', function(e) {
+                const key = e.key ? e.key.toUpperCase() : '';
+                const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+                // F12
+                if (e.key === 'F12' || e.keyCode === 123) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+Shift+I / J / C or Cmd+Option+I / J / C
+                if (ctrlOrCmd && e.shiftKey && (key === 'I' || key === 'J' || key === 'C')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                if (e.metaKey && e.altKey && (key === 'I' || key === 'J' || key === 'C' || key === 'U')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+U (View Source) or Ctrl+S (Save HTML)
+                if (ctrlOrCmd && (key === 'U' || key === 'S')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            });
+        })();
+
+        /* =========================================================================
+         * 2. APPLICATION STATE & CONFIGURATION
+         * ========================================================================= */
+        const state = {
+            currentUrl: 'https://ko.wikipedia.org',
+            viewport: 'desktop', // 'desktop' (1280x800), 'tablet' (768x1024), 'mobile' (375x812)
+            frameStyle: 'browser', // 'browser', 'card', 'none'
+            bgTheme: 'indigo', // 'indigo', 'ocean', 'sunset', 'dark', 'clean', 'transparent'
+            engine: 'microlink',
+            loadedImage: null, // HTMLImageElement when CORS-safe
+            rawScreenshotUrl: '',
+            isCorsTainted: false,
+            history: []
+        };
+
+        const VIEWPORT_MAP = {
+            desktop: { width: 1280, height: 800, label: '데스크톱 (1280×800)' },
+            tablet:  { width: 768,  height: 1024, label: '태블릿 (768×1024)' },
+            mobile:  { width: 375,  height: 812, label: '모바일 (375×812)' }
+        };
+
+        const BG_GRADIENTS = {
+            indigo: ['#6366f1', '#7c3aed'],
+            ocean:  ['#06b6d4', '#2563eb'],
+            sunset: ['#fb7185', '#f97316'],
+            dark:   ['#1e293b', '#0f172a'],
+            clean:  ['#e2e8f0', '#cbd5e1'],
+            transparent: null
+        };
+
+        /* =========================================================================
+         * 3. URL FORMATTING & INPUT HELPERS
+         * ========================================================================= */
+        function normalizeUrl(inputStr) {
+            let trimmed = (inputStr || '').trim();
+            if (!trimmed) return '';
+            if (!/^https?:\/\//i.test(trimmed)) {
+                trimmed = 'https://' + trimmed;
+            }
+            try {
+                const urlObj = new URL(trimmed);
+                return urlObj.href;
+            } catch (err) {
+                return '';
+            }
+        }
+
+        function clearUrlInput() {
+            const input = document.getElementById('urlInput');
+            input.value = '';
+            input.focus();
+        }
+
+        async function pasteFromClipboard() {
+            const input = document.getElementById('urlInput');
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        input.value = text.trim();
+                        captureSingleSite();
+                        return;
+                    }
+                }
+            } catch (e) {
+                // Fallback if iframe blocks clipboard read
+            }
+            input.focus();
+            showToast('입력창에 Ctrl+V (또는 길게 눌러 붙여넣기)를 해주세요.', 'info');
+        }
+
+        function selectSample(sampleUrl) {
+            document.getElementById('urlInput').value = sampleUrl;
+            captureSingleSite();
+        }
+
+        function switchMode(mode) {
+            const singleSec = document.getElementById('singleModeSection');
+            const batchSec = document.getElementById('batchModeSection');
+            const tabSingle = document.getElementById('tabSingle');
+            const tabBatch = document.getElementById('tabBatch');
+
+            if (mode === 'single') {
+                singleSec.classList.remove('hidden');
+                batchSec.classList.add('hidden');
+                tabSingle.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm flex items-center gap-1.5';
+                tabBatch.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+            } else {
+                singleSec.classList.add('hidden');
+                batchSec.classList.remove('hidden');
+                tabBatch.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm flex items-center gap-1.5';
+                tabSingle.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+                
+                // Pre-populate batch if empty
+                if (!document.getElementById('batchUrlsInput').value.trim()) {
+                    fillSampleBatchUrls();
+                    generateBatchGallery();
+                }
+            }
+        }
+
+        /* =========================================================================
+         * 4. OPTION SELECTORS (VIEWPORT, FRAME, THEME)
+         * ========================================================================= */
+        function setViewport(vp) {
+            state.viewport = vp;
+            ['desktop', 'tablet', 'mobile'].forEach(key => {
+                const btn = document.getElementById('vp-' + key);
+                if (key === vp) {
+                    btn.className = 'vp-btn flex flex-col items-center justify-center p-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50/60 text-indigo-700 font-semibold text-xs transition';
+                } else {
+                    btn.className = 'vp-btn flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs transition';
+                }
+            });
+            captureSingleSite();
+        }
+
+        function setFrameStyle(style) {
+            state.frameStyle = style;
+            ['browser', 'card', 'none'].forEach(key => {
+                const btn = document.getElementById('frame-' + key);
+                if (key === style) {
+                    btn.className = 'frame-btn py-2.5 px-2 rounded-xl border-2 border-indigo-600 bg-indigo-50/60 text-indigo-700 font-semibold text-xs text-center transition';
+                } else {
+                    btn.className = 'frame-btn py-2.5 px-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs text-center transition';
+                }
+            });
+
+            // Re-render immediately without refetching from network
+            if (state.loadedImage && !state.isCorsTainted) {
+                renderCanvasComposition();
+            }
+        }
+
+        function setBgTheme(theme) {
+            state.bgTheme = theme;
+            ['indigo', 'ocean', 'sunset', 'dark', 'clean', 'transparent'].forEach(key => {
+                const btn = document.getElementById('bg-' + key);
+                if (!btn) return;
+                btn.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-600');
+                if (key === theme) {
+                    btn.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-600');
+                }
+            });
+
+            if (state.loadedImage && !state.isCorsTainted) {
+                renderCanvasComposition();
+            }
+        }
+
+        /* =========================================================================
+         * 5. SCREENSHOT ENGINE & FETCH LOGIC
+         * ========================================================================= */
+        async function captureSingleSite() {
+            const rawInput = document.getElementById('urlInput').value;
+            const validUrl = normalizeUrl(rawInput);
+
+            if (!validUrl) {
+                showToast('올바른 웹사이트 주소(URL)를 입력해 주세요.', 'error');
+                return;
+            }
+
+            // Update normalized URL in input field
+            document.getElementById('urlInput').value = validUrl;
+            document.getElementById('openOriginalUrlLink').href = validUrl;
+            state.currentUrl = validUrl;
+            state.engine = document.getElementById('engineSelect').value;
+
+            const vpConfig = VIEWPORT_MAP[state.viewport];
+            setLoadingState(true, `${new URL(validUrl).hostname} 첫 화면을 캡처하는 중...`);
+
+            try {
+                let imageUrl = '';
+                let metaData = null;
+
+                if (state.engine === 'microlink') {
+                    const apiEndpoint = `https://api.microlink.io/?url=${encodeURIComponent(validUrl)}&screenshot=true&meta=true&viewport.width=${vpConfig.width}&viewport.height=${vpConfig.height}`;
+                    const res = await fetch(apiEndpoint);
+                    const json = await res.json();
+
+                    if (json && json.status === 'success' && json.data && json.data.screenshot) {
+                        imageUrl = json.data.screenshot.url;
+                        metaData = {
+                            title: json.data.title || new URL(validUrl).hostname,
+                            description: json.data.description || '설명이 제공되지 않는 웹페이지입니다.',
+                            url: json.data.url || validUrl,
+                            logo: (json.data.logo && json.data.logo.url) ? json.data.logo.url : `https://www.google.com/s2/favicons?domain=${new URL(validUrl).hostname}&sz=64`
+                        };
+                    } else {
+                        throw new Error('Microlink API limit or blocked');
+                    }
+                } else if (state.engine === 'thumio') {
+                    imageUrl = `https://image.thum.io/get/width/${vpConfig.width}/crop/${vpConfig.height}/noanimate/${validUrl}`;
+                    metaData = buildFallbackMeta(validUrl);
+                } else {
+                    // WordPress mShots
+                    imageUrl = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(validUrl)}?w=${vpConfig.width}&h=${vpConfig.height}`;
+                    metaData = buildFallbackMeta(validUrl);
+                }
+
+                state.rawScreenshotUrl = imageUrl;
+                updateMetadataUI(metaData);
+
+                // Attempt to load image with anonymous CORS for Canvas manipulation
+                await loadAndRenderImage(imageUrl, validUrl, metaData);
+                setLoadingState(false);
+                showToast('웹사이트 첫 화면 캡처가 완료되었습니다!', 'success');
+
+            } catch (err) {
+                console.warn('Primary engine error, attempting automatic fallback:', err);
+                // Automatic fallback to Thum.io or mShots if Microlink fails
+                const fallbackUrl = `https://image.thum.io/get/width/${vpConfig.width}/crop/${vpConfig.height}/noanimate/${validUrl}`;
+                state.rawScreenshotUrl = fallbackUrl;
+                const fallbackMeta = buildFallbackMeta(validUrl);
+                updateMetadataUI(fallbackMeta);
+
+                try {
+                    await loadAndRenderImage(fallbackUrl, validUrl, fallbackMeta);
+                    setLoadingState(false);
+                    showToast('보조 캡처 엔진을 통해 화면을 가져왔습니다.', 'info');
+                } catch (finalErr) {
+                    setLoadingState(false);
+                    showToast('캡처 중 오류가 발생했습니다. 다른 캡처 엔진을 선택해 보세요.', 'error');
+                }
+            }
+        }
+
+        function buildFallbackMeta(validUrl) {
+            const hostname = new URL(validUrl).hostname;
+            return {
+                title: hostname,
+                description: `${validUrl} 웹사이트의 실시간 첫 페이지 캡처 화면입니다.`,
+                url: validUrl,
+                logo: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`
+            };
+        }
+
+        function updateMetadataUI(meta) {
+            const card = document.getElementById('metaInfoCard');
+            if (!meta) {
+                card.classList.add('hidden');
+                return;
+            }
+            card.classList.remove('hidden');
+            document.getElementById('metaTitle').textContent = meta.title;
+            const urlEl = document.getElementById('metaUrl');
+            urlEl.textContent = meta.url;
+            urlEl.href = meta.url;
+            document.getElementById('metaDesc').textContent = meta.description;
+            document.getElementById('metaFavicon').src = meta.logo;
+        }
+
+        function loadAndRenderImage(imgUrl, siteUrl, meta) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+
+                img.onload = () => {
+                    state.loadedImage = img;
+                    state.isCorsTainted = false;
+                    document.getElementById('screenshotCanvas').classList.remove('hidden');
+                    document.getElementById('corsFallbackContainer').classList.add('hidden');
+                    renderCanvasComposition();
+                    addToHistory(siteUrl, imgUrl, meta);
+                    resolve();
+                };
+
+                img.onerror = () => {
+                    // If CORS anonymous fails (e.g. mShots redirect), load directly in <img> tag
+                    const fallbackImg = document.getElementById('fallbackImage');
+                    const fallbackContainer = document.getElementById('corsFallbackContainer');
+                    const canvas = document.getElementById('screenshotCanvas');
+
+                    fallbackImg.onload = () => {
+                        state.isCorsTainted = true;
+                        canvas.classList.add('hidden');
+                        fallbackContainer.classList.remove('hidden');
+                        document.getElementById('fallbackUrlBar').textContent = siteUrl;
+                        addToHistory(siteUrl, imgUrl, meta);
+                        resolve();
+                    };
+                    fallbackImg.onerror = () => reject(new Error('Image load failed'));
+                    fallbackImg.src = imgUrl;
+                };
+
+                img.src = imgUrl;
+            });
+        }
+
+        /* =========================================================================
+         * 6. HTML5 CANVAS COMPOSITING (BROWSER MOCKUP / CARD SHADOW / RAW)
+         * ========================================================================= */
+        function renderCanvasComposition() {
+            const canvas = document.getElementById('screenshotCanvas');
+            const ctx = canvas.getContext('2d');
+            const img = state.loadedImage;
+            if (!img) return;
+
+            const imgW = img.naturalWidth || 1280;
+            const imgH = img.naturalHeight || 800;
+
+            if (state.frameStyle === 'none') {
+                canvas.width = imgW;
+                canvas.height = imgH;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, imgW, imgH);
+                return;
+            }
+
+            // Padding & Header calculation
+            const pad = state.bgTheme === 'transparent' ? 24 : Math.round(Math.max(imgW, imgH) * 0.055);
+            const headerH = state.frameStyle === 'browser' ? 54 : 0;
+            const totalW = imgW + pad * 2;
+            const totalH = imgH + headerH + pad * 2;
+            const radius = 18;
+
+            canvas.width = totalW;
+            canvas.height = totalH;
+            ctx.clearRect(0, 0, totalW, totalH);
+
+            // 1. Draw Background Gradient (if not transparent)
+            const gradColors = BG_GRADIENTS[state.bgTheme];
+            if (gradColors) {
+                const grad = ctx.createLinearGradient(0, 0, totalW, totalH);
+                grad.addColorStop(0, gradColors[0]);
+                grad.addColorStop(1, gradColors[1]);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, totalW, totalH);
+            }
+
+            const winX = pad;
+            const winY = pad;
+            const winW = imgW;
+            const winH = imgH + headerH;
+
+            // 2. Draw Drop Shadow around Window/Card
+            ctx.save();
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.38)';
+            ctx.shadowBlur = 36;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 16;
+
+            drawRoundedRect(ctx, winX, winY, winW, winH, radius);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.restore();
+
+            // 3. Clip to Rounded Window Container
+            ctx.save();
+            drawRoundedRect(ctx, winX, winY, winW, winH, radius);
+            ctx.clip();
+
+            // 4. Draw Browser Top Bar if selected
+            if (state.frameStyle === 'browser') {
+                // Header background
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(winX, winY, winW, headerH);
+
+                // Traffic Light Dots (macOS style)
+                const dotY = winY + headerH / 2;
+                const dots = [
+                    { x: winX + 24, color: '#ff5f56' },
+                    { x: winX + 46, color: '#ffbd2e' },
+                    { x: winX + 68, color: '#27c93f' }
+                ];
+                dots.forEach(d => {
+                    ctx.beginPath();
+                    ctx.arc(d.x, dotY, 6.5, 0, Math.PI * 2);
+                    ctx.fillStyle = d.color;
+                    ctx.fill();
+                });
+
+                // URL Address Bar Pill
+                const barX = winX + 100;
+                const barW = Math.max(160, winW - 200);
+                const barH = 30;
+                const barY = winY + (headerH - barH) / 2;
+
+                drawRoundedRect(ctx, barX, barY, barW, barH, 8);
+                ctx.fillStyle = '#0f172a';
+                ctx.fill();
+
+                // URL Text inside bar
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '500 13px Pretendard, sans-serif';
+                ctx.textBaseline = 'middle';
+                const displayUrl = '🔒  ' + state.currentUrl;
+                ctx.fillText(displayUrl, barX + 14, winY + headerH / 2, barW - 28);
+            }
+
+            // 5. Draw the Website Screenshot Image
+            ctx.drawImage(img, winX, winY + headerH, imgW, imgH);
+            ctx.restore();
+
+            // Subtle Inner Border
+            drawRoundedRect(ctx, winX, winY, winW, winH, radius);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        /* =========================================================================
+         * 7. EXPORT ACTIONS (DOWNLOAD PNG & COPY TO CLIPBOARD)
+         * ========================================================================= */
+        async function downloadScreenshot() {
+            const hostname = new URL(state.currentUrl).hostname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = `screenshot_${hostname}_${state.viewport}.png`;
+
+            if (!state.isCorsTainted && state.loadedImage) {
+                try {
+                    const canvas = document.getElementById('screenshotCanvas');
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = dataUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showToast(`'${fileName}' 파일 저장이 시작되었습니다!`, 'success');
+                    return;
+                } catch (err) {
+                    console.warn('Canvas export fallback triggered:', err);
+                }
+            }
+
+            // Fallback: fetch blob or open image in new tab
+            try {
+                const response = await fetch(state.rawScreenshotUrl);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = blobUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+                showToast(`'${fileName}' 원본 이미지가 다운로드되었습니다.`, 'success');
+            } catch (e) {
+                window.open(state.rawScreenshotUrl, '_blank');
+                showToast('새 탭에서 원본 캡처 이미지를 열었습니다.', 'info');
+            }
+        }
+
+        async function copyCanvasToClipboard() {
+            if (!state.isCorsTainted && state.loadedImage && navigator.clipboard && window.ClipboardItem) {
+                try {
+                    const canvas = document.getElementById('screenshotCanvas');
+                    canvas.toBlob(async (blob) => {
+                        try {
+                            const item = new ClipboardItem({ 'image/png': blob });
+                            await navigator.clipboard.write([item]);
+                            showToast('캡처 이미지가 클립보드에 복사되었습니다! (Ctrl+V로 붙여넣기 가능)', 'success');
+                        } catch (clipErr) {
+                            copyTextFallback(state.rawScreenshotUrl);
+                        }
+                    }, 'image/png');
+                    return;
+                } catch (err) {
+                    // Fallback to copying image URL
+                }
+            }
+            copyTextFallback(state.rawScreenshotUrl);
+        }
+
+        function copyTextFallback(textToCopy) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('캡처 이미지 직접 링크가 클립보드에 복사되었습니다!', 'info');
+        }
+
+        /* =========================================================================
+         * 8. CAPTURE HISTORY MANAGEMENT
+         * ========================================================================= */
+        function addToHistory(siteUrl, imgUrl, meta) {
+            // Avoid duplicates at top
+            state.history = state.history.filter(item => item.siteUrl !== siteUrl);
+            state.history.unshift({
+                siteUrl,
+                imgUrl,
+                title: (meta && meta.title) ? meta.title : new URL(siteUrl).hostname,
+                time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+            });
+            if (state.history.length > 4) state.history.pop();
+            renderHistoryGrid();
+        }
+
+        function renderHistoryGrid() {
+            const grid = document.getElementById('historyGrid');
+            if (state.history.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-6 text-center text-xs text-slate-400">캡처한 사이트가 이곳에 자동으로 저장되어 언제든 다시 불러올 수 있습니다.</div>`;
+                return;
+            }
+
+            grid.innerHTML = state.history.map((item, idx) => `
+                <div onclick="selectSample('${item.siteUrl}')" class="group cursor-pointer rounded-xl border border-slate-200 overflow-hidden bg-slate-50 hover:border-indigo-500 hover:shadow-md transition flex flex-col">
+                    <div class="aspect-video bg-slate-200 overflow-hidden relative">
+                        <img src="${item.imgUrl}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/400x250/e2e8f0/64748b?text=Preview'">
+                        <span class="absolute bottom-1.5 right-1.5 bg-slate-900/75 text-white text-[10px] px-1.5 py-0.5 rounded">${item.time}</span>
+                    </div>
+                    <div class="p-2.5 bg-white">
+                        <p class="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-600">${item.title}</p>
+                        <p class="text-[11px] text-slate-400 truncate">${item.siteUrl}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            state.history = [];
+            renderHistoryGrid();
+            showToast('최근 캡처 기록을 비웠습니다.', 'info');
+        }
+
+        /* =========================================================================
+         * 9. MULTI-URL BATCH GALLERY MODE
+         * ========================================================================= */
+        function fillSampleBatchUrls() {
+            document.getElementById('batchUrlsInput').value = [
+                'https://ko.wikipedia.org',
+                'https://github.com',
+                'https://tailwindcss.com',
+                'https://news.ycombinator.com'
+            ].join('\n');
+        }
+
+        function generateBatchGallery() {
+            const rawLines = document.getElementById('batchUrlsInput').value.split('\n');
+            const validUrls = [];
+
+            rawLines.forEach(line => {
+                const normalized = normalizeUrl(line);
+                if (normalized && !validUrls.includes(normalized)) {
+                    validUrls.push(normalized);
+                }
+            });
+
+            if (validUrls.length === 0) {
+                showToast('최소 1개 이상의 유효한 웹사이트 링크를 입력해 주세요.', 'error');
+                return;
+            }
+
+            const targetUrls = validUrls.slice(0, 8);
+            const grid = document.getElementById('batchGalleryGrid');
+
+            grid.innerHTML = targetUrls.map((url, index) => {
+                const hostname = new URL(url).hostname;
+                const thumbUrl = `https://image.thum.io/get/width/800/crop/500/noanimate/${url}`;
+                const backupUrl = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=800&h=500`;
+                const favicon = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+
+                return `
+                    <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+                        <!-- Mini Browser Top Bar -->
+                        <div class="bg-slate-800 px-3 py-2 flex items-center gap-2">
+                            <div class="flex gap-1">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            </div>
+                            <span class="text-[11px] text-slate-300 font-mono truncate flex-1">${hostname}</span>
+                        </div>
+
+                        <!-- Thumbnail Image -->
+                        <div class="aspect-[16/10] bg-slate-100 relative overflow-hidden group">
+                            <img 
+                                src="${thumbUrl}" 
+                                alt="${hostname}" 
+                                onerror="this.onerror=null; this.src='${backupUrl}';"
+                                class="w-full h-full object-cover object-top group-hover:scale-105 transition duration-500"
+                            >
+                            <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                                <button onclick="openInSingleStudio('${url}')" class="px-3 py-1.5 bg-white text-slate-900 rounded-lg text-xs font-bold shadow hover:bg-indigo-50 hover:text-indigo-600 transition flex items-center gap-1">
+                                    <i class="ph-bold ph-frame-corners"></i> 스튜디오에서 편집
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="p-3.5 flex items-center justify-between gap-2 bg-white">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <img src="${favicon}" alt="icon" class="w-5 h-5 rounded shrink-0" onerror="this.style.display='none'">
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-slate-800 truncate">${hostname}</h4>
+                                    <a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-600 hover:underline truncate block">${url}</a>
+                                </div>
+                            </div>
+                            <a href="${url}" target="_blank" rel="noopener noreferrer" title="사이트 방문" class="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition">
+                                <i class="ph-bold ph-arrow-up-right text-sm"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            showToast(`총 ${targetUrls.length}개 사이트의 첫 화면 갤러리를 생성했습니다!`, 'success');
+        }
+
+        function openInSingleStudio(url) {
+            switchMode('single');
+            selectSample(url);
+        }
+
+        /* =========================================================================
+         * 10. UI FEEDBACK HELPERS (LOADING & TOASTS)
+         * ========================================================================= */
+        function setLoadingState(isLoading, message = '') {
+            const overlay = document.getElementById('loadingOverlay');
+            const btn = document.getElementById('captureBtn');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            if (isLoading) {
+                overlay.classList.remove('hidden');
+                if (message) document.getElementById('loadingTitle').textContent = message;
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping';
+                statusText.textContent = '실시간 화면 캡처 중...';
+            } else {
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+                statusText.textContent = `캡처 완료 · ${VIEWPORT_MAP[state.viewport].label}`;
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            const iconMap = {
+                success: '<i class="ph-fill ph-check-circle text-emerald-400 text-lg shrink-0"></i>',
+                error:   '<i class="ph-fill ph-warning-circle text-rose-400 text-lg shrink-0"></i>',
+                info:    '<i class="ph-fill ph-info text-indigo-400 text-lg shrink-0"></i>'
+            };
+
+            toast.className = 'pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900/95 text-white text-xs font-medium shadow-xl border border-slate-700/80 transform transition-all duration-300 translate-y-2 opacity-0';
+            toast.innerHTML = `
+                ${iconMap[type] || iconMap.info}
+                <span class="leading-snug">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // Initial Boot: Capture default sample URL on load
+        window.onload = function() {
+            captureSingleSite();
+        };
+    </script>
+</body>
+</html>
